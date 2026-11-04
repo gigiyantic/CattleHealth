@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14532D">
+<title>CattleHealth AI — Herd Dashboard</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg:#F4F6F1; --card:#FFFFFF; --ink:#13221A; --muted:#6B7A70; --line:#E3E8E1;
+    --brand:#166534; --brand-2:#22C55E; --warn:#D97706; --crit:#DC2626; --heat:#DB2777; --info:#2563EB;
+    --radius:16px;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Sans Devanagari",sans-serif; background:var(--bg); color:var(--ink); }
+  header { position:sticky; top:0; z-index:5; background:var(--brand); color:#fff; padding:14px 20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  header h1 { font-size:18px; margin:0; display:flex; align-items:center; gap:10px; font-weight:700; }
+  header .sp { flex:1; }
+  header select, header button { font:inherit; font-size:14px; border-radius:10px; border:1px solid rgba(255,255,255,.3); background:rgba(255,255,255,.12); color:#fff; padding:7px 10px; cursor:pointer; }
+  header select option { color:#000; }
+  main { max-width:1200px; margin:0 auto; padding:20px; }
+  .tiles { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+  .tile { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; }
+  .tile b { display:block; font-size:28px; line-height:1.1; }
+  .tile span { color:var(--muted); font-size:13px; }
+  h2 { font-size:15px; margin:22px 0 10px; color:var(--muted); font-weight:600; letter-spacing:.02em; text-transform:uppercase; }
+  .alerts { display:flex; flex-direction:column; gap:8px; }
+  .alert { background:var(--card); border:1px solid var(--line); border-left:5px solid var(--info); border-radius:12px; padding:10px 14px; display:flex; gap:12px; align-items:center; }
+  .alert.warning { border-left-color:var(--warn); } .alert.critical { border-left-color:var(--crit); } .alert.heat { border-left-color:var(--heat); }
+  .alert .msg { flex:1; font-size:14.5px; }
+  .alert .when { color:var(--muted); font-size:12px; white-space:nowrap; }
+  .btn { font:inherit; font-size:13px; padding:6px 12px; border-radius:9px; border:1px solid var(--line); background:#fff; cursor:pointer; }
+  .btn.primary { background:var(--brand); color:#fff; border-color:var(--brand); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:12px; }
+  .cow { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px; cursor:pointer; transition:transform .1s, box-shadow .1s; text-align:left; font:inherit; color:inherit; width:100%; }
+  .cow:hover { transform:translateY(-1px); box-shadow:0 8px 22px -14px rgba(0,0,0,.35); }
+  .cow .top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .cow .name { font-weight:700; font-size:16px; }
+  .cow .tag { color:var(--muted); font-size:12px; }
+  .pill { font-size:11.5px; font-weight:700; padding:3px 9px; border-radius:99px; background:#DCFCE7; color:#166534; white-space:nowrap; }
+  .pill.warning { background:#FEF3C7; color:#92400E; } .pill.critical { background:#FEE2E2; color:#991B1B; }
+  .pill.heat { background:#FCE7F3; color:#9D174D; } .pill.no_data { background:#F1F5F9; color:#64748B; }
+  .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:12px; }
+  .metrics div { background:var(--bg); border-radius:10px; padding:7px 8px; }
+  .metrics b { display:block; font-size:16px; }
+  .metrics span { font-size:11px; color:var(--muted); }
+  .foot { margin-top:10px; font-size:11.5px; color:var(--muted); display:flex; justify-content:space-between; }
+  .empty { background:var(--card); border:1px dashed var(--line); border-radius:var(--radius); padding:26px; text-align:center; color:var(--muted); }
+  dialog { border:none; border-radius:20px; padding:0; width:min(760px,96vw); max-height:92vh; box-shadow:0 30px 80px -20px rgba(0,0,0,.45); }
+  dialog::backdrop { background:rgba(10,20,15,.45); }
+  .dlg-h { padding:16px 20px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:10px; }
+  .dlg-h h3 { margin:0; font-size:18px; flex:1; }
+  .dlg-b { padding:16px 20px 22px; overflow:auto; max-height:calc(92vh - 64px); }
+  .chart { background:var(--bg); border-radius:12px; padding:10px; margin-bottom:12px; }
+  .chart .t { font-size:12.5px; color:var(--muted); margin:0 0 4px 4px; display:flex; justify-content:space-between; }
+  svg text { font-size:10px; fill:var(--muted); }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+  .row input { font:inherit; padding:7px 10px; border:1px solid var(--line); border-radius:9px; }
+  .offline { background:#FEF3C7; color:#92400E; text-align:center; font-size:13px; padding:6px; display:none; }
+  @media (max-width:700px) { .tiles { grid-template-columns:repeat(2,1fr); } main { padding:14px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1><img src="icon.svg" width="28" height="28" alt=""> <span data-i18n="title">CattleHealth AI</span></h1>
+  <div class="sp"></div>
+  <select id="farm" aria-label="Farm"></select>
+  <select id="lang" aria-label="Language">
+    <option value="en">English</option><option value="hi">हिन्दी</option>
+  </select>
+  <button id="refresh" title="Refresh">⟳</button>
+  <button id="settings" title="Settings">⚙</button>
+</header>
+<div class="offline" id="offline" data-i18n="offline">Offline — showing last saved data</div>
+<main>
+  <section class="tiles">
+    <div class="tile"><b id="t-cows">–</b><span data-i18n="cows">Cows</span></div>
+    <div class="tile"><b id="t-ok" style="color:var(--brand)">–</b><span data-i18n="healthy">Healthy</span></div>
+    <div class="tile"><b id="t-alert" style="color:var(--crit)">–</b><span data-i18n="attention">Need attention</span></div>
+    <div class="tile"><b id="t-heat" style="color:var(--heat)">–</b><span data-i18n="inheat">In heat</span></div>
+  </section>
+
+  <h2 data-i18n="activeAlerts">Active alerts</h2>
+  <div class="alerts" id="alerts"></div>
+
+  <h2 data-i18n="herd">Herd</h2>
+  <div class="grid" id="herd"></div>
+</main>
+
+<dialog id="cowDlg">
+  <div class="dlg-h"><h3 id="cowTitle"></h3><span class="pill" id="cowPill"></span><button class="btn" id="cowClose">✕</button></div>
+  <div class="dlg-b" id="cowBody"></div>
+</dialog>
+
+<dialog id="setDlg">
+  <div class="dlg-h"><h3 data-i18n="settings">Settings</h3><button class="btn" id="setClose">✕</button></div>
+  <div class="dlg-b">
+    <div class="row"><label style="width:120px" data-i18n="server">Server URL</label><input id="sUrl" placeholder="(same origin)" style="flex:1"></div>
+    <div class="row"><label style="width:120px" data-i18n="apikey">API key</label><input id="sKey" type="password" style="flex:1"></div>
+    <div class="row"><button class="btn primary" id="sSave" data-i18n="save">Save</button></div>
+  </div>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>

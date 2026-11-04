@@ -2,7 +2,7 @@
 ## Comprehensive Technical & Business Specification (BRD / TRS)
 
 **Document Version**: 1.0.0  
-**Repository**: [gigiyantic/bug-free-winner](https://github.com/gigiyantic/bug-free-winner)  
+**Repository**: [gigiyantic/CattleHealth](https://github.com/gigiyantic/CattleHealth)  
 **Target Unit Cost**: < ₹200 INR ($2.50 USD)  
 **Target Market**: Smallholder Dairy Farmers in India & Global Emerging Markets  
 
